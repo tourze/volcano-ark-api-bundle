@@ -1,0 +1,52 @@
+services:
+  # default configuration for services in *this* file
+  _defaults:
+    autowire: true      # Automatically injects dependencies in your services.
+    autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+  # Client
+  Tourze\VolcanoArkApiBundle\Client\VolcanoArkApiClient: ~
+
+  # Commands
+  Tourze\VolcanoArkApiBundle\Command\ApiKeyManageCommand: ~
+  Tourze\VolcanoArkApiBundle\Command\SyncUsageCommand: ~
+
+  # Repositories
+  Tourze\VolcanoArkApiBundle\Repository\ApiKeyRepository: ~
+  Tourze\VolcanoArkApiBundle\Repository\ApiKeyUsageRepository: ~
+  Tourze\VolcanoArkApiBundle\Repository\AuditLogRepository: ~
+
+  # Services
+  Tourze\VolcanoArkApiBundle\Service\ApiKeyService:
+    public: true
+  Tourze\VolcanoArkApiBundle\Service\AuditLogService:
+    public: true
+  Tourze\VolcanoArkApiBundle\Service\UsageService:
+    public: true
+  Tourze\VolcanoArkApiBundle\Service\VolcanoArkOpenAiClient:
+    public: true
+
+  # OpenAI Client Factory with http_client dependency
+  Tourze\VolcanoArkApiBundle\Service\VolcanoArkOpenAiClientFactory:
+    public: true
+    arguments:
+      $httpClient: '@http_client'
+
+  # OpenAI Client Provider with tag
+  Tourze\VolcanoArkApiBundle\Service\VolcanoArkOpenAiClientProvider:
+    public: true
+    tags:
+      - { name: 'openai.client.provider' }
+
+  # Controllers
+  Tourze\VolcanoArkApiBundle\Controller\ApiKeyCrudController: ~
+  Tourze\VolcanoArkApiBundle\Controller\ApiKeyUsageCrudController: ~
+  Tourze\VolcanoArkApiBundle\Controller\AuditLogCrudController: ~
+
+  # Admin Menu Service
+  Tourze\VolcanoArkApiBundle\Service\AdminMenu:
+    public: true
+
+  # Attribute Controller Loader
+  Tourze\VolcanoArkApiBundle\Service\AttributeControllerLoader:
+    public: true
