@@ -4,6 +4,9 @@ services:
     autowire: true      # Automatically injects dependencies in your services.
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
+  Tourze\VolcanoArkApiBundle\Controller\:
+    resource: '../../Controller/'
+
   # Client
   Tourze\VolcanoArkApiBundle\Client\VolcanoArkApiClient: ~
 
@@ -38,15 +41,6 @@ services:
     tags:
       - { name: 'openai.client.provider' }
 
-  # Controllers
-  Tourze\VolcanoArkApiBundle\Controller\ApiKeyCrudController: ~
-  Tourze\VolcanoArkApiBundle\Controller\ApiKeyUsageCrudController: ~
-  Tourze\VolcanoArkApiBundle\Controller\AuditLogCrudController: ~
-
   # Admin Menu Service
   Tourze\VolcanoArkApiBundle\Service\AdminMenu:
-    public: true
-
-  # Attribute Controller Loader
-  Tourze\VolcanoArkApiBundle\Service\AttributeControllerLoader:
     public: true

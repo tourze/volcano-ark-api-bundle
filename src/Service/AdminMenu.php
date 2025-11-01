@@ -8,9 +8,9 @@ use Knp\Menu\ItemInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Tourze\EasyAdminMenuBundle\Service\LinkGeneratorInterface;
 use Tourze\EasyAdminMenuBundle\Service\MenuProviderInterface;
-use Tourze\VolcanoArkApiBundle\Controller\ApiKeyCrudController;
-use Tourze\VolcanoArkApiBundle\Controller\ApiKeyUsageCrudController;
-use Tourze\VolcanoArkApiBundle\Controller\AuditLogCrudController;
+use Tourze\VolcanoArkApiBundle\Controller\Admin\ApiKeyCrudController;
+use Tourze\VolcanoArkApiBundle\Controller\Admin\ApiKeyUsageCrudController;
+use Tourze\VolcanoArkApiBundle\Controller\Admin\AuditLogCrudController;
 
 /**
  * Volcano Ark API 菜单提供者

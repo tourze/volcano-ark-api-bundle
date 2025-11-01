@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tourze\VolcanoArkApiBundle\Controller;
+namespace Tourze\VolcanoArkApiBundle\Controller\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminCrud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;

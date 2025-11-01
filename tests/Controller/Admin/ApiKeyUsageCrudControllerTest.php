@@ -2,25 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Tourze\VolcanoArkApiBundle\Tests\Controller;
+namespace Tourze\VolcanoArkApiBundle\Tests\Controller\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Tourze\PHPUnitSymfonyWebTest\AbstractEasyAdminControllerTestCase;
-use Tourze\VolcanoArkApiBundle\Controller\AuditLogCrudController;
+use Tourze\VolcanoArkApiBundle\Controller\Admin\ApiKeyUsageCrudController;
 
 /**
  * @internal
  */
-#[CoversClass(AuditLogCrudController::class)]
+#[CoversClass(ApiKeyUsageCrudController::class)]
 #[RunTestsInSeparateProcesses]
 #[Group('volcano-ark-api-bundle')]
-class AuditLogCrudControllerTest extends AbstractEasyAdminControllerTestCase
+class ApiKeyUsageCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
-    protected function getControllerService(): AuditLogCrudController
+    protected function getControllerService(): ApiKeyUsageCrudController
     {
-        return new AuditLogCrudController();
+        return new ApiKeyUsageCrudController();
     }
 
     /** @return \Generator<string, array{string}> */
@@ -28,12 +28,14 @@ class AuditLogCrudControllerTest extends AbstractEasyAdminControllerTestCase
     {
         yield 'ID' => ['ID'];
         yield 'API密钥' => ['API密钥'];
-        yield '操作类型' => ['操作类型'];
-        yield '客户端IP' => ['客户端IP'];
-        yield '状态码' => ['状态码'];
-        yield '响应时间(毫秒)' => ['响应时间(毫秒)'];
-        yield '是否成功' => ['是否成功'];
+        yield '使用小时' => ['使用小时'];
+        yield '提示词数量' => ['提示词数量'];
+        yield '完成词数量' => ['完成词数量'];
+        yield '总token数' => ['总token数'];
+        yield '请求次数' => ['请求次数'];
+        yield '预估成本' => ['预估成本'];
         yield '创建时间' => ['创建时间'];
+        yield '更新时间' => ['更新时间'];
     }
 
     /** @return \Generator<string, array{string}> */
@@ -59,7 +61,7 @@ class AuditLogCrudControllerTest extends AbstractEasyAdminControllerTestCase
     {
         $client = self::createClientWithDatabase();
 
-        // 注意：AuditLogCrudController 禁用了NEW和EDIT操作，此测试仅用于满足 PHPStan 规则要求
+        // 注意：ApiKeyUsageCrudController 禁用了NEW和EDIT操作，此测试仅用于满足 PHPStan 规则要求
         // 在实际应用中，此控制器不支持直接表单提交
 
         // 模拟表单验证错误检查 - 如果支持表单提交，这将是期望的行为

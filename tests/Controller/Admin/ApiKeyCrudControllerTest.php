@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Tourze\VolcanoArkApiBundle\Tests\Controller;
+namespace Tourze\VolcanoArkApiBundle\Tests\Controller\Admin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Tourze\PHPUnitSymfonyWebTest\AbstractEasyAdminControllerTestCase;
-use Tourze\VolcanoArkApiBundle\Controller\ApiKeyCrudController;
+use Tourze\VolcanoArkApiBundle\Controller\Admin\ApiKeyCrudController;
 
 /**
  * @internal
@@ -68,8 +68,7 @@ class ApiKeyCrudControllerTest extends AbstractEasyAdminControllerTestCase
      */
     public function testValidationErrors(): void
     {
-        $client = self::createClientWithDatabase();
-        $this->loginAsAdmin($client);
+        $client = self::createAuthenticatedClient();
         $crawler = $client->request('GET', '/admin/volcano-ark-api/api-key?crudAction=new');
 
         // 设置静态客户端以支持响应断言
