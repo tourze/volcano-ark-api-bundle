@@ -6,6 +6,7 @@ namespace Tourze\VolcanoArkApiBundle\Service;
 
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Tourze\OpenAiContracts\Authentication\AuthenticationStrategyInterface;
 use Tourze\OpenAiContracts\Client\AbstractOpenAiClient;
 use Tourze\VolcanoArkApiBundle\Entity\ApiKey;
 use Tourze\VolcanoArkApiBundle\Exception\GenericApiException;
@@ -101,7 +102,7 @@ class VolcanoArkOpenAiClientFactory
         ApiKey $apiKey,
         string $region,
         bool $botMode,
-        string $baseUri
+        string $baseUri,
     ): void {
         $client->setName($apiKey->getName());
         $client->setBaseUrl($baseUri);
@@ -124,7 +125,7 @@ class VolcanoArkOpenAiClientFactory
         }
 
         $authStrategy = $config['authentication_strategy'];
-        if ($authStrategy instanceof \Tourze\OpenAiContracts\Authentication\AuthenticationStrategyInterface) {
+        if ($authStrategy instanceof AuthenticationStrategyInterface) {
             $client->setAuthenticationStrategy($authStrategy);
         }
     }
@@ -201,7 +202,7 @@ class VolcanoArkOpenAiClientFactory
 
         if (isset($config['authentication_strategy'])) {
             $authStrategy = $config['authentication_strategy'];
-            if ($authStrategy instanceof \Tourze\OpenAiContracts\Authentication\AuthenticationStrategyInterface) {
+            if ($authStrategy instanceof AuthenticationStrategyInterface) {
                 $client->setAuthenticationStrategy($authStrategy);
             }
         }

@@ -40,7 +40,6 @@ class AuditLogItem
         $logContents = $data['LogContents'] ?? [];
         assert(is_array($logContents));
         /** @var array<int, array<string, string>> $logContents */
-
         $riskLevel = $data['RiskLevel'] ?? '';
         assert(is_string($riskLevel));
 
