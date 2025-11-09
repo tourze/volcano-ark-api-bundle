@@ -10,10 +10,10 @@ use Tourze\VolcanoArkApiBundle\Entity\ApiKey;
 use Tourze\VolcanoArkApiBundle\Exception\UnexpectedResponseException;
 use Tourze\VolcanoArkApiBundle\Request\GetUsageRequest;
 
-class UsageService
+readonly class UsageService
 {
     public function __construct(
-        private readonly VolcanoArkApiClient $apiClient,
+        private VolcanoArkApiClient $apiClient,
     ) {
     }
 
