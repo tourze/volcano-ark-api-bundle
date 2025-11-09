@@ -233,8 +233,6 @@ class VolcanoArkOpenAiClient extends AbstractOpenAiClient
 
     /**
      * @param array<string, mixed> $data
-     *
-     * @phpstan-ignore-next-line 线程安全：仅创建响应对象，不涉及实际余额操作
      */
     protected function createBalanceResponse(array $data): BalanceResponseInterface
     {
