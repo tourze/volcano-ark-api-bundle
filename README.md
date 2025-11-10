@@ -378,17 +378,17 @@ framework:
 ### 常见问题
 
 1. **No active API key found**
-   - 确保至少有一个激活的 API 密钥
-   - 检查密钥的 `isActive` 字段是否为 `true`
+    - 确保至少有一个激活的 API 密钥
+    - 检查密钥的 `isActive` 字段是否为 `true`
 
 2. **API request failed**
-   - 验证 API 密钥和密钥值是否正确
-   - 检查网络连接和防火墙设置
-   - 确认区域设置是否正确
+    - 验证 API 密钥和密钥值是否正确
+    - 检查网络连接和防火墙设置
+    - 确认区域设置是否正确
 
 3. **Database connection errors**
-   - 确保 Doctrine 配置正确
-   - 检查数据库连接和权限
+    - 确保 Doctrine 配置正确
+    - 检查数据库连接和权限
 
 ### 调试模式
 
