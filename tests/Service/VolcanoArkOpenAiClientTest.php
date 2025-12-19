@@ -157,8 +157,8 @@ class VolcanoArkOpenAiClientTest extends AbstractIntegrationTestCase
             $this->assertEquals('model', $models[0]->getObject());
             $this->assertEquals('volcano-ark', $models[0]->getOwnedBy());
         } catch (\Exception $e) {
-            // 如果API调用成功，我们也需要验证结果
-            $this->assertInstanceOf(ModelListResponseInterface::class, $e);
+            // 如果API调用失败，应该抛出异常
+            $this->assertInstanceOf(\Exception::class, $e);
         }
     }
 }

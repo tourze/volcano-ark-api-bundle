@@ -16,7 +16,7 @@ use Tourze\VolcanoArkApiBundle\Controller\Admin\AuditLogCrudController;
  * Volcano Ark API 菜单提供者
  */
 #[Autoconfigure(public: true)]
-readonly class AdminMenu implements MenuProviderInterface
+readonly final class AdminMenu implements MenuProviderInterface
 {
     public function __construct(
         private LinkGeneratorInterface $linkGenerator,

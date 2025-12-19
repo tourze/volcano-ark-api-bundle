@@ -3,44 +3,25 @@ services:
   _defaults:
     autowire: true      # Automatically injects dependencies in your services.
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+    public: false
 
   Tourze\VolcanoArkApiBundle\Controller\:
     resource: '../../Controller/'
 
-  # Client
-  Tourze\VolcanoArkApiBundle\Client\VolcanoArkApiClient: ~
+  Tourze\VolcanoArkApiBundle\Command\:
+    resource: '../../Command/'
 
-  # Commands
-  Tourze\VolcanoArkApiBundle\Command\ApiKeyManageCommand: ~
-  Tourze\VolcanoArkApiBundle\Command\SyncUsageCommand: ~
+  Tourze\VolcanoArkApiBundle\Repository\:
+    resource: '../../Repository/'
 
-  # Repositories
-  Tourze\VolcanoArkApiBundle\Repository\ApiKeyRepository: ~
-  Tourze\VolcanoArkApiBundle\Repository\ApiKeyUsageRepository: ~
-  Tourze\VolcanoArkApiBundle\Repository\AuditLogRepository: ~
-
-  # Services
-  Tourze\VolcanoArkApiBundle\Service\ApiKeyService:
-    public: true
-  Tourze\VolcanoArkApiBundle\Service\AuditLogService:
-    public: true
-  Tourze\VolcanoArkApiBundle\Service\UsageService:
-    public: true
-  Tourze\VolcanoArkApiBundle\Service\VolcanoArkOpenAiClient:
+  Tourze\VolcanoArkApiBundle\Service\:
+    resource: '../../Service/'
     public: true
 
-  # OpenAI Client Factory with http_client dependency
-  Tourze\VolcanoArkApiBundle\Service\VolcanoArkOpenAiClientFactory:
+  Tourze\VolcanoArkApiBundle\EventListener\:
+    resource: '../../EventListener/'
     public: true
-    arguments:
-      $httpClient: '@http_client'
 
-  # OpenAI Client Provider with tag
-  Tourze\VolcanoArkApiBundle\Service\VolcanoArkOpenAiClientProvider:
-    public: true
-    tags:
-      - { name: 'openai.client.provider' }
-
-  # Admin Menu Service
-  Tourze\VolcanoArkApiBundle\Service\AdminMenu:
+  Tourze\VolcanoArkApiBundle\Client\:
+    resource: '../../Client/'
     public: true

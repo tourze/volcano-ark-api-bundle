@@ -17,7 +17,7 @@ use Tourze\VolcanoArkApiBundle\Service\ApiKeyService;
     name: 'volcano:api-key:manage',
     description: 'Manage Volcano Ark API keys',
 )]
-class ApiKeyManageCommand extends Command
+final class ApiKeyManageCommand extends Command
 {
     public function __construct(
         private readonly ApiKeyService $apiKeyService,

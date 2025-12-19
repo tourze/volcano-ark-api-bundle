@@ -6,6 +6,7 @@ namespace Tourze\VolcanoArkApiBundle\Tests\Client;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use ReflectionNamedType;
 use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 use Tourze\VolcanoArkApiBundle\Client\VolcanoArkApiClient;
 use Tourze\VolcanoArkApiBundle\Entity\ApiKey;
@@ -45,12 +46,6 @@ class VolcanoArkApiClientTest extends AbstractIntegrationTestCase
 
     public function testRequest(): void
     {
-        // 创建 Mock RequestInterface
-        $request = $this->createMock(\HttpClientBundle\Request\RequestInterface::class);
-        $request->method('getRequestPath')->willReturn('/test/path');
-        $request->method('getRequestMethod')->willReturn('POST');
-        $request->method('getRequestOptions')->willReturn(['test' => 'data']);
-
         // 由于 request() 方法是对父类的简单包装加类型守卫,
         // 我们通过 reflection 验证方法存在且返回类型正确
         $reflection = new \ReflectionMethod($this->client, 'request');
@@ -61,5 +56,13 @@ class VolcanoArkApiClientTest extends AbstractIntegrationTestCase
         $this->assertInstanceOf(\ReflectionNamedType::class, $returnType);
         $this->assertEquals('array', $returnType->getName());
         $this->assertFalse($returnType->allowsNull());
+
+        // 验证方法参数
+        $parameters = $reflection->getParameters();
+        $this->assertCount(1, $parameters);
+        $this->assertEquals('request', $parameters[0]->getName());
+        $type = $parameters[0]->getType();
+        $this->assertInstanceOf(ReflectionNamedType::class, $type);
+        $this->assertEquals(\HttpClientBundle\Request\RequestInterface::class, $type->getName());
     }
 }

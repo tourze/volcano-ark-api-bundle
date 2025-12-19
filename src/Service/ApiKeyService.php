@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Tourze\VolcanoArkApiBundle\Service;
 
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use Tourze\VolcanoArkApiBundle\Entity\ApiKey;
 use Tourze\VolcanoArkApiBundle\Exception\GenericApiException;
 use Tourze\VolcanoArkApiBundle\Repository\ApiKeyRepository;
 
-class ApiKeyService
+#[WithMonologChannel(channel: 'volcano_ark_api')]
+final class ApiKeyService
 {
     private ?ApiKey $currentKey = null;
 

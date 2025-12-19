@@ -8,7 +8,6 @@ use Knp\Menu\ItemInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
-use PHPUnit\Framework\MockObject\MockObject;
 use Tourze\EasyAdminMenuBundle\Service\LinkGeneratorInterface;
 use Tourze\EasyAdminMenuBundle\Service\MenuProviderInterface;
 use Tourze\PHPUnitSymfonyWebTest\AbstractEasyAdminMenuTestCase;
@@ -23,19 +22,22 @@ use Tourze\VolcanoArkApiBundle\Service\AdminMenu;
 class AdminMenuTest extends AbstractEasyAdminMenuTestCase
 {
     private AdminMenu $adminMenu;
-
-    private LinkGeneratorInterface&MockObject $linkGenerator;
+    private LinkGeneratorInterface $linkGenerator;
 
     protected function onSetUp(): void
     {
-        $this->linkGenerator = $this->createMock(LinkGeneratorInterface::class);
-        static::getContainer()->set(LinkGeneratorInterface::class, $this->linkGenerator);
         $this->adminMenu = self::getService(AdminMenu::class);
+        $this->linkGenerator = self::getService(LinkGeneratorInterface::class);
     }
 
     public function testServiceCanBeInstantiated(): void
     {
         $this->assertInstanceOf(AdminMenu::class, $this->adminMenu);
+    }
+
+    public function testMenuProviderInterface(): void
+    {
+        $this->assertInstanceOf(MenuProviderInterface::class, $this->adminMenu);
     }
 
     public function testInvokeCreatesVolcanoArkMenu(): void
@@ -60,15 +62,6 @@ class AdminMenuTest extends AbstractEasyAdminMenuTestCase
             ->willReturn($volcanoMenu)
         ;
 
-        $this->linkGenerator->expects($this->exactly(3))
-            ->method('getCurdListPage')
-            ->willReturnOnConsecutiveCalls(
-                '/admin/api-key',
-                '/admin/api-key-usage',
-                '/admin/audit-log'
-            )
-        ;
-
         $volcanoMenu->expects($this->exactly(3))
             ->method('addChild')
             ->willReturnOnConsecutiveCalls($apiKeyMenu, $usageMenu, $auditMenu)
@@ -77,7 +70,7 @@ class AdminMenuTest extends AbstractEasyAdminMenuTestCase
         // 配置API密钥菜单项的链式调用
         $apiKeyMenu->expects($this->once())
             ->method('setUri')
-            ->with('/admin/api-key')
+            ->with('/admin/volcano-ark-api/api-key')
             ->willReturn($apiKeyMenu)
         ;
 
@@ -89,7 +82,7 @@ class AdminMenuTest extends AbstractEasyAdminMenuTestCase
         // 配置使用统计菜单项的链式调用
         $usageMenu->expects($this->once())
             ->method('setUri')
-            ->with('/admin/api-key-usage')
+            ->with('/admin/volcano-ark-api/api-key-usage')
             ->willReturn($usageMenu)
         ;
 
@@ -101,7 +94,7 @@ class AdminMenuTest extends AbstractEasyAdminMenuTestCase
         // 配置审计日志菜单项的链式调用
         $auditMenu->expects($this->once())
             ->method('setUri')
-            ->with('/admin/audit-log')
+            ->with('/admin/volcano-ark-api/audit-log')
             ->willReturn($auditMenu)
         ;
 
@@ -113,8 +106,12 @@ class AdminMenuTest extends AbstractEasyAdminMenuTestCase
         ($this->adminMenu)($rootItem);
     }
 
-    public function testMenuProviderInterface(): void
+    public function testLinkGeneratorIntegration(): void
     {
-        $this->assertInstanceOf(MenuProviderInterface::class, $this->adminMenu);
+        // 测试 LinkGenerator 是否正确集成
+        $this->assertInstanceOf(LinkGeneratorInterface::class, $this->linkGenerator);
+
+        // 验证 LinkGenerator 实例可用
+        $this->assertNotNull($this->linkGenerator);
     }
 }

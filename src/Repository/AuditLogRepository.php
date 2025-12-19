@@ -15,7 +15,7 @@ use Tourze\VolcanoArkApiBundle\Entity\AuditLog;
  */
 #[Autoconfigure(public: true)]
 #[AsRepository(entityClass: AuditLog::class)]
-class AuditLogRepository extends ServiceEntityRepository
+final class AuditLogRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {

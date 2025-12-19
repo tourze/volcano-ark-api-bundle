@@ -15,7 +15,7 @@ use Tourze\VolcanoArkApiBundle\Entity\ApiKeyUsage;
  */
 #[AsEntityListener(event: Events::preUpdate, method: 'preUpdate', entity: ApiKey::class)]
 #[AsEntityListener(event: Events::preUpdate, method: 'preUpdate', entity: ApiKeyUsage::class)]
-class TimestampableListener
+final class TimestampableListener
 {
     public function preUpdate(object $entity, PreUpdateEventArgs $args): void
     {

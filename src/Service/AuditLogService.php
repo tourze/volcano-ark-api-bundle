@@ -9,7 +9,7 @@ use Tourze\VolcanoArkApiBundle\DTO\AuditLogFilter;
 use Tourze\VolcanoArkApiBundle\DTO\AuditLogResult;
 use Tourze\VolcanoArkApiBundle\Request\ListAuditLogsRequest;
 
-readonly class AuditLogService
+readonly final class AuditLogService
 {
     public function __construct(
         private VolcanoArkApiClient $apiClient,

@@ -6,6 +6,7 @@ namespace Tourze\VolcanoArkApiBundle\Client;
 
 use HttpClientBundle\Client\ApiClient;
 use HttpClientBundle\Request\RequestInterface;
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,6 +20,7 @@ use Tourze\VolcanoArkApiBundle\Exception\GenericApiException;
 use Tourze\VolcanoArkApiBundle\Exception\UnexpectedResponseException;
 use Tourze\VolcanoArkApiBundle\Service\ApiKeyService;
 
+#[WithMonologChannel(channel: 'volcano_ark_api')]
 class VolcanoArkApiClient extends ApiClient
 {
     private const API_ENDPOINT = 'https://open.volcengineapi.com';

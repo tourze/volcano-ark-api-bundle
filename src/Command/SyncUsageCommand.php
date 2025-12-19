@@ -23,7 +23,7 @@ use Tourze\VolcanoArkApiBundle\Service\UsageService;
     name: 'volcano:usage:sync',
     description: 'Sync API usage data from Volcano Ark to local database',
 )]
-class SyncUsageCommand extends Command
+final class SyncUsageCommand extends Command
 {
     public function __construct(
         private readonly ApiKeyRepository $apiKeyRepository,

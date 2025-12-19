@@ -14,7 +14,7 @@ use Tourze\VolcanoArkApiBundle\DependencyInjection\VolcanoArkApiExtension;
  * @internal
  */
 #[CoversClass(VolcanoArkApiExtension::class)]
-class VolcanoArkApiExtensionTest extends AbstractDependencyInjectionExtensionTestCase
+final class VolcanoArkApiExtensionTest extends AbstractDependencyInjectionExtensionTestCase
 {
     private VolcanoArkApiExtension $extension;
 

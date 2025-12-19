@@ -16,7 +16,7 @@ use Tourze\VolcanoArkApiBundle\Entity\ApiKeyUsage;
  */
 #[Autoconfigure(public: true)]
 #[AsRepository(entityClass: ApiKeyUsage::class)]
-class ApiKeyUsageRepository extends ServiceEntityRepository
+final class ApiKeyUsageRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {

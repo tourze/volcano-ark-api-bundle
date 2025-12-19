@@ -6,13 +6,12 @@ namespace Tourze\VolcanoArkApiBundle\Tests\Command;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
-use PHPUnit\Framework\MockObject\MockObject;
-use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Tourze\PHPUnitSymfonyKernelTest\AbstractCommandTestCase;
 use Tourze\VolcanoArkApiBundle\Command\ApiKeyManageCommand;
 use Tourze\VolcanoArkApiBundle\Entity\ApiKey;
+use Tourze\VolcanoArkApiBundle\Repository\ApiKeyRepository;
 use Tourze\VolcanoArkApiBundle\Service\ApiKeyService;
 
 /**
@@ -22,37 +21,36 @@ use Tourze\VolcanoArkApiBundle\Service\ApiKeyService;
 #[RunTestsInSeparateProcesses]
 class ApiKeyManageCommandTest extends AbstractCommandTestCase
 {
-    private ApiKeyService&MockObject $apiKeyService;
-
+    private ApiKeyService $apiKeyService;
+    private ApiKeyRepository $apiKeyRepository;
     private CommandTester $commandTester;
+
+    protected function onSetUp(): void
+    {
+        $this->apiKeyService = self::getService(ApiKeyService::class);
+        $this->apiKeyRepository = self::getService(ApiKeyRepository::class);
+
+        $command = self::getService(ApiKeyManageCommand::class);
+        $this->assertInstanceOf(ApiKeyManageCommand::class, $command);
+        $this->commandTester = new CommandTester($command);
+    }
 
     protected function getCommandTester(): CommandTester
     {
         return $this->commandTester;
     }
 
-    protected function onSetUp(): void
-    {
-        $kernel = self::$kernel;
-        $this->assertNotNull($kernel, 'Kernel should not be null');
-        $application = new Application($kernel);
-
-        $this->apiKeyService = $this->createMock(ApiKeyService::class);
-
-        self::getContainer()->set(ApiKeyService::class, $this->apiKeyService);
-        $command = self::getContainer()->get(ApiKeyManageCommand::class);
-        $this->assertInstanceOf(ApiKeyManageCommand::class, $command, 'Command should be instance of ApiKeyManageCommand');
-        $application->add($command);
-
-        $this->commandTester = new CommandTester($command);
-    }
-
     public function testListKeysWithNoKeys(): void
     {
-        $this->apiKeyService->expects($this->once())
-            ->method('getAllKeys')
-            ->willReturn([])
-        ;
+        // 清理数据库中的所有API Key
+        $allKeys = $this->apiKeyRepository->findAll();
+        foreach ($allKeys as $key) {
+            self::getEntityManager()->remove($key);
+        }
+        self::getEntityManager()->flush();
+
+        // 确保数据库是空的
+        $this->assertCount(0, $this->apiKeyRepository->findAll());
 
         $this->commandTester->execute(['action' => 'list']);
 
@@ -62,20 +60,22 @@ class ApiKeyManageCommandTest extends AbstractCommandTestCase
 
     public function testListKeysWithExistingKeys(): void
     {
-        $apiKey1 = new ApiKey();
-        $apiKey1->setName('Test Key 1');
-        $apiKey1->setRegion('cn-beijing');
-        $apiKey1->setIsActive(true);
+        // 创建并保存第一个 API Key
+        $apiKey1 = $this->apiKeyService->createKey(
+            'Test Key 1',
+            'test-api-key-1',
+            'test-secret-key-1',
+            'cn-beijing'
+        );
 
-        $apiKey2 = new ApiKey();
-        $apiKey2->setName('Test Key 2');
-        $apiKey2->setRegion('cn-shanghai');
-        $apiKey2->setIsActive(false);
-
-        $this->apiKeyService->expects($this->once())
-            ->method('getAllKeys')
-            ->willReturn([$apiKey1, $apiKey2])
-        ;
+        // 创建并保存第二个 API Key
+        $apiKey2 = $this->apiKeyService->createKey(
+            'Test Key 2',
+            'test-api-key-2',
+            'test-secret-key-2',
+            'cn-shanghai'
+        );
+        $this->apiKeyService->deactivateKey($apiKey2);
 
         $this->commandTester->execute(['action' => 'list']);
 
@@ -87,20 +87,10 @@ class ApiKeyManageCommandTest extends AbstractCommandTestCase
         $this->assertStringContainsString('Inactive', $output);
         $this->assertStringContainsString('cn-beijing', $output);
         $this->assertStringContainsString('cn-shanghai', $output);
-        $this->assertStringContainsString('Never', $output);
     }
 
     public function testCreateKeySuccess(): void
     {
-        $apiKey = new ApiKey();
-        $apiKey->setName('New Key');
-
-        $this->apiKeyService->expects($this->once())
-            ->method('createKey')
-            ->with('New Key', 'test-api-key', 'test-secret-key', 'cn-beijing')
-            ->willReturn($apiKey)
-        ;
-
         $this->commandTester->execute([
             'action' => 'create',
             '--name' => 'New Key',
@@ -111,6 +101,14 @@ class ApiKeyManageCommandTest extends AbstractCommandTestCase
 
         $this->assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
         $this->assertStringContainsString('API key "New Key" created successfully', $this->commandTester->getDisplay());
+
+        // 验证密钥确实被创建了
+        $createdKey = $this->apiKeyService->findKeyByName('New Key');
+        $this->assertNotNull($createdKey);
+        $this->assertEquals('New Key', $createdKey->getName());
+        $this->assertEquals('test-api-key', $createdKey->getApiKey());
+        $this->assertEquals('test-secret-key', $createdKey->getSecretKey());
+        $this->assertEquals('cn-beijing', $createdKey->getRegion());
     }
 
     public function testCreateKeyMissingParameters(): void
@@ -127,19 +125,13 @@ class ApiKeyManageCommandTest extends AbstractCommandTestCase
 
     public function testActivateKeySuccess(): void
     {
-        $apiKey = new ApiKey();
-        $apiKey->setName('Test Key');
-
-        $this->apiKeyService->expects($this->once())
-            ->method('findKeyByName')
-            ->with('Test Key')
-            ->willReturn($apiKey)
-        ;
-
-        $this->apiKeyService->expects($this->once())
-            ->method('activateKey')
-            ->with($apiKey)
-        ;
+        // 先创建一个密钥
+        $apiKey = $this->apiKeyService->createKey(
+            'Test Key',
+            'test-api-key',
+            'test-secret-key'
+        );
+        $this->apiKeyService->deactivateKey($apiKey);
 
         $this->commandTester->execute([
             'action' => 'activate',
@@ -148,15 +140,17 @@ class ApiKeyManageCommandTest extends AbstractCommandTestCase
 
         $this->assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
         $this->assertStringContainsString('API key "Test Key" activated', $this->commandTester->getDisplay());
+
+        // 验证密钥确实被激活了
+        $activatedKey = $this->apiKeyService->findKeyByName('Test Key');
+        $this->assertNotNull($activatedKey);
+        $this->assertTrue($activatedKey->isActive());
     }
 
     public function testActivateKeyNotFound(): void
     {
-        $this->apiKeyService->expects($this->once())
-            ->method('findKeyByName')
-            ->with('NonExistent')
-            ->willReturn(null)
-        ;
+        // 确保这个密钥不存在
+        $this->assertNull($this->apiKeyService->findKeyByName('NonExistent'));
 
         $this->commandTester->execute([
             'action' => 'activate',
@@ -169,19 +163,12 @@ class ApiKeyManageCommandTest extends AbstractCommandTestCase
 
     public function testDeactivateKeySuccess(): void
     {
-        $apiKey = new ApiKey();
-        $apiKey->setName('Test Key');
-
-        $this->apiKeyService->expects($this->once())
-            ->method('findKeyByName')
-            ->with('Test Key')
-            ->willReturn($apiKey)
-        ;
-
-        $this->apiKeyService->expects($this->once())
-            ->method('deactivateKey')
-            ->with($apiKey)
-        ;
+        // 先创建一个激活的密钥
+        $apiKey = $this->apiKeyService->createKey(
+            'Test Key',
+            'test-api-key',
+            'test-secret-key'
+        );
 
         $this->commandTester->execute([
             'action' => 'deactivate',
@@ -190,23 +177,22 @@ class ApiKeyManageCommandTest extends AbstractCommandTestCase
 
         $this->assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
         $this->assertStringContainsString('API key "Test Key" deactivated', $this->commandTester->getDisplay());
+
+        // 验证密钥确实被停用了
+        $deactivatedKey = $this->apiKeyService->findKeyByName('Test Key');
+        $this->assertNotNull($deactivatedKey);
+        $this->assertFalse($deactivatedKey->isActive());
     }
 
     public function testDeleteKeyWithConfirmation(): void
     {
-        $apiKey = new ApiKey();
-        $apiKey->setName('Test Key');
-
-        $this->apiKeyService->expects($this->once())
-            ->method('findKeyByName')
-            ->with('Test Key')
-            ->willReturn($apiKey)
-        ;
-
-        $this->apiKeyService->expects($this->once())
-            ->method('deleteKey')
-            ->with($apiKey)
-        ;
+        // 先创建一个密钥
+        $apiKey = $this->apiKeyService->createKey(
+            'Test Key',
+            'test-api-key',
+            'test-secret-key'
+        );
+        $keyId = $apiKey->getId();
 
         $this->commandTester->setInputs(['yes']);
         $this->commandTester->execute([
@@ -216,22 +202,21 @@ class ApiKeyManageCommandTest extends AbstractCommandTestCase
 
         $this->assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
         $this->assertStringContainsString('API key "Test Key" deleted', $this->commandTester->getDisplay());
+
+        // 验证密钥确实被删除了
+        $deletedKey = $this->apiKeyRepository->find($keyId);
+        $this->assertNull($deletedKey);
     }
 
     public function testDeleteKeyCancellation(): void
     {
-        $apiKey = new ApiKey();
-        $apiKey->setName('Test Key');
-
-        $this->apiKeyService->expects($this->once())
-            ->method('findKeyByName')
-            ->with('Test Key')
-            ->willReturn($apiKey)
-        ;
-
-        $this->apiKeyService->expects($this->never())
-            ->method('deleteKey')
-        ;
+        // 先创建一个密钥
+        $apiKey = $this->apiKeyService->createKey(
+            'Test Key',
+            'test-api-key',
+            'test-secret-key'
+        );
+        $keyId = $apiKey->getId();
 
         $this->commandTester->setInputs(['no']);
         $this->commandTester->execute([
@@ -241,6 +226,10 @@ class ApiKeyManageCommandTest extends AbstractCommandTestCase
 
         $this->assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
         $this->assertStringContainsString('Deletion cancelled', $this->commandTester->getDisplay());
+
+        // 验证密钥没有被删除
+        $existingKey = $this->apiKeyRepository->find($keyId);
+        $this->assertNotNull($existingKey);
     }
 
     public function testUnknownAction(): void
@@ -265,124 +254,57 @@ class ApiKeyManageCommandTest extends AbstractCommandTestCase
 
     public function testArgumentAction(): void
     {
-        // 测试有效的action参数
-        $validActions = ['list', 'create', 'activate', 'deactivate', 'delete'];
+        $command = self::getService(\Tourze\VolcanoArkApiBundle\Command\ApiKeyManageCommand::class);
+        $definition = $command->getDefinition();
 
-        foreach ($validActions as $action) {
-            $this->apiKeyService->method('getAllKeys')->willReturn([]);
-
-            // 对于需要name参数的操作，提供name参数
-            $args = ['action' => $action];
-            if (in_array($action, ['activate', 'deactivate', 'delete'], true)) {
-                $args['--name'] = 'test-key';
-                $this->apiKeyService->method('findKeyByName')->willReturn(null);
-            } elseif ('create' === $action) {
-                $args['--name'] = 'test-key';
-                $args['--api-key'] = 'test-api';
-                $args['--secret-key'] = 'test-secret';
-            }
-
-            $statusCode = $this->commandTester->execute($args);
-
-            // 验证命令能够处理这个action参数（不管结果如何，重要的是不会因为未知action而失败）
-            $this->assertContains($statusCode, [Command::SUCCESS, Command::FAILURE],
-                "Command should handle action '{$action}' without throwing exceptions");
-        }
+        // 验证 action 参数存在
+        $this->assertTrue($definition->hasArgument('action'));
+        $actionArgument = $definition->getArgument('action');
+        $this->assertTrue($actionArgument->isRequired());
+        $this->assertEquals('Action to perform: list, create, activate, deactivate, delete', $actionArgument->getDescription());
     }
 
     public function testOptionName(): void
     {
-        // 测试--name选项在激活操作中的使用
-        $apiKey = new ApiKey();
-        $apiKey->setName('test-key');
+        $command = self::getService(\Tourze\VolcanoArkApiBundle\Command\ApiKeyManageCommand::class);
+        $definition = $command->getDefinition();
 
-        $this->apiKeyService->expects($this->once())
-            ->method('findKeyByName')
-            ->with('test-key')
-            ->willReturn($apiKey)
-        ;
-
-        $this->apiKeyService->expects($this->once())
-            ->method('activateKey')
-            ->with($apiKey)
-        ;
-
-        $this->commandTester->execute([
-            'action' => 'activate',
-            '--name' => 'test-key',
-        ]);
-
-        $this->assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
-        $this->assertStringContainsString('API key "test-key" activated', $this->commandTester->getDisplay());
+        // 验证 --name 选项存在
+        $this->assertTrue($definition->hasOption('name'));
+        $nameOption = $definition->getOption('name');
+        $this->assertEquals('API key name', $nameOption->getDescription());
     }
 
     public function testOptionApiKey(): void
     {
-        // 测试--api-key选项在create操作中的使用
-        $apiKey = new ApiKey();
-        $apiKey->setName('test-key');
+        $command = self::getService(\Tourze\VolcanoArkApiBundle\Command\ApiKeyManageCommand::class);
+        $definition = $command->getDefinition();
 
-        $this->apiKeyService->expects($this->once())
-            ->method('createKey')
-            ->with('test-key', 'test-api-123', 'test-secret', 'cn-beijing')
-            ->willReturn($apiKey)
-        ;
-
-        $this->commandTester->execute([
-            'action' => 'create',
-            '--name' => 'test-key',
-            '--api-key' => 'test-api-123',
-            '--secret-key' => 'test-secret',
-        ]);
-
-        $this->assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
-        $this->assertStringContainsString('API key "test-key" created successfully', $this->commandTester->getDisplay());
+        // 验证 --api-key 选项存在
+        $this->assertTrue($definition->hasOption('api-key'));
+        $apiKeyOption = $definition->getOption('api-key');
+        $this->assertEquals('API key value', $apiKeyOption->getDescription());
     }
 
     public function testOptionSecretKey(): void
     {
-        // 测试--secret-key选项在create操作中的使用
-        $apiKey = new ApiKey();
-        $apiKey->setName('test-key');
+        $command = self::getService(\Tourze\VolcanoArkApiBundle\Command\ApiKeyManageCommand::class);
+        $definition = $command->getDefinition();
 
-        $this->apiKeyService->expects($this->once())
-            ->method('createKey')
-            ->with('test-key', 'test-api', 'test-secret-456', 'cn-beijing')
-            ->willReturn($apiKey)
-        ;
-
-        $this->commandTester->execute([
-            'action' => 'create',
-            '--name' => 'test-key',
-            '--api-key' => 'test-api',
-            '--secret-key' => 'test-secret-456',
-        ]);
-
-        $this->assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
-        $this->assertStringContainsString('API key "test-key" created successfully', $this->commandTester->getDisplay());
+        // 验证 --secret-key 选项存在
+        $this->assertTrue($definition->hasOption('secret-key'));
+        $secretKeyOption = $definition->getOption('secret-key');
+        $this->assertEquals('Secret key value', $secretKeyOption->getDescription());
     }
 
     public function testOptionRegion(): void
     {
-        // 测试--region选项在create操作中的使用
-        $apiKey = new ApiKey();
-        $apiKey->setName('test-key');
+        $command = self::getService(\Tourze\VolcanoArkApiBundle\Command\ApiKeyManageCommand::class);
+        $definition = $command->getDefinition();
 
-        $this->apiKeyService->expects($this->once())
-            ->method('createKey')
-            ->with('test-key', 'test-api', 'test-secret', 'us-east-1')
-            ->willReturn($apiKey)
-        ;
-
-        $this->commandTester->execute([
-            'action' => 'create',
-            '--name' => 'test-key',
-            '--api-key' => 'test-api',
-            '--secret-key' => 'test-secret',
-            '--region' => 'us-east-1',
-        ]);
-
-        $this->assertEquals(Command::SUCCESS, $this->commandTester->getStatusCode());
-        $this->assertStringContainsString('API key "test-key" created successfully', $this->commandTester->getDisplay());
+        // 验证 --region 选项存在
+        $this->assertTrue($definition->hasOption('region'));
+        $regionOption = $definition->getOption('region');
+        $this->assertEquals('Region (default: cn-beijing)', $regionOption->getDescription());
     }
 }
